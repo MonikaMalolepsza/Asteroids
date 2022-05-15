@@ -256,19 +256,19 @@ namespace Asteroids
             switch (nearestAsteroid.Type)
             {
                 case 1:
-                    distNearestObject -= 10;
+                    distNearestObject -= 4 * 4;
                     break;
 
                 case 2:
-                    distNearestObject -= 10*10;
+                    distNearestObject -= 8 * 8;
                     break;
 
                 case 3:
-                    distNearestObject -= 15*15;
+                    distNearestObject -= 16 * 16;
                     break;
 
                 case 4:
-                    distNearestObject -= 20*20;
+                    distNearestObject -= 20 * 20;
                     break;
             }
 
@@ -280,31 +280,73 @@ namespace Asteroids
                     distNearestObject = distSaucer;
                     dirXNearestObject = gf.Saucer.X - gf.SpaceShip.X;
                     dirYNearestObject = gf.Saucer.Y - gf.SpaceShip.Y;
-                }
-            }
 
+                    //if (distNearestObject - distSaucer < 100)
+                    //{
+                    //    return 3;
+                    //}
+                }
+                //else if (distSaucer - distNearestObject < 5)
+                //{
+                //    return 5;
+                //}
+            }
             Vector spaceShipDirection = new Vector(gf.SpaceShip.Dx, gf.SpaceShip.Dy);
             Vector nearestAsteroidDirection = new Vector(dirXNearestObject, dirYNearestObject);
 
+            //if (gf.Asteroids.Count > 1)
+            //{
+            //    var c = 0;
+            //    foreach (Asteroid a in gf.Asteroids)
+            //    {
+            //        var distA = GetDistanceBetweenVectors(gf.SpaceShip.X, a.X, a.Y, gf.SpaceShip.Y);
+            //        if (distA < 80)
+            //        {
+            //            if (a.Type == 1 && Vector.Multiply(spaceShipDirection, nearestAsteroidDirection) < 1000)
+            //            {
+            //                c++;
+            //            }
+            //        }
+            //    }
+            //    if (c > 1)
+            //    {
+            //        return 5;
+            //    }
+            //}
+
             // "Run for your life" mode
-            if (distNearestObject <= 50)
+            /*
+                    case ConsoleKey.A - 1
+                    case ConsoleKey.D - 2
+                    case ConsoleKey.P - 3
+                    case ConsoleKey.W - 4
+                    case ConsoleKey.Spacebar - 5
+                        break;
+             */
+            var relation = Vector.CrossProduct(spaceShipDirection, nearestAsteroidDirection);
+            Console.WriteLine(relation);
+            if (distNearestObject <= 80)
             {
-                return 4;
-            } else if(distNearestObject>50&&distNearestObject<250)
-            {
-                if (Vector.Multiply(spaceShipDirection, nearestAsteroidDirection) > 0)
-                {
-                    return 1;
-                }
-                else if (Vector.Multiply(spaceShipDirection, nearestAsteroidDirection) < 0)
-                {
-                    return 2;
-                }
-                else
-                {
+               if (relation > 5000) 
+               {
                     return 3;
+               } else if (relation > -1200 )
+                {
+                    return 5;
                 }
-            } else
+
+                return 4;
+            }
+
+            if (relation > 0)
+            {
+                return 2;
+            }
+            else if (relation < 0)
+            {
+                return 1;
+            }
+            else
             {
                 return 3;
             }
