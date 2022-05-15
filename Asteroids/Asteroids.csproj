@@ -44,6 +44,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AsteroidsController.cs" />
+    <Compile Include="Model\Asteroid.cs" />
+    <Compile Include="Model\GameField.cs" />
+    <Compile Include="Model\Saucer.cs" />
+    <Compile Include="Model\Shot.cs" />
+    <Compile Include="Model\SpaceShip.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -11,7 +11,7 @@ namespace Asteroids
         private static void Main(string[] args)
         {
             var controller = new AsteroidsController();
-
+            controller.Test();
             bool isRunning = true;
 
             while (isRunning)
