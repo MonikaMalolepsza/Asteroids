@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace Asteroids
 {
@@ -84,7 +85,7 @@ namespace Asteroids
             int v1x = 0;
             int v1y = 0;
             GameField result = new GameField();
-            for (int i = 2; i < ram.Length; i += 2)
+            for (int i = 2; i < ram.Length - 2; i += 2)
             {
                 int[] res = new int[1];
                 RightShift(new BitArray(new byte[] { ram[i], ram[i + 1] }), 12).CopyTo(res, 0);
@@ -92,7 +93,7 @@ namespace Asteroids
                 switch (operation)
                 {
                     case 10: //LABS
-                        Console.WriteLine("LABS");
+                        //Console.WriteLine("LABS");
                         BitArray tmpLabs = new BitArray(new byte[] { ram[i], ram[i + 1] });
                         tmpLabs.And(new BitArray(new bool[] { true, true, true, true, true, true, true, true, true, true, false, false, false, false, false, false }));
                         tmpLabs.CopyTo(res, 0);
@@ -107,38 +108,38 @@ namespace Asteroids
                         break;
 
                     case 11: //HALT
-                        Console.WriteLine("HALT");
+                        //Console.WriteLine("HALT");
                         break;
 
                     case 12: //JSRL
-                        Console.WriteLine("JSRL");
+                        //Console.WriteLine("JSRL");
                         new BitArray(new byte[] { ram[i], ram[i + 1] }).And(new BitArray(new bool[] { true, true, true, true, true, true, true, true, true, true, true, true, false, false, false, false })).CopyTo(res, 0);
                         if (res[0] == 0x8F3)
-                            result.Asteroids.Add(new Asteroid(1, labsX, labsY, gsf));
+                            result.Asteroids.Add(new Asteroid(1, gsf, labsX, labsY));
                         else if (res[0] == 0x8FF)
-                            result.Asteroids.Add(new Asteroid(2, labsX, labsY, gsf));
+                            result.Asteroids.Add(new Asteroid(2, gsf, labsX, labsY));
                         else if (res[0] == 0x90D)
-                            result.Asteroids.Add(new Asteroid(3, labsX, labsY, gsf));
+                            result.Asteroids.Add(new Asteroid(3, gsf, labsX, labsY));
                         else if (res[0] == 0x91A)
-                            result.Asteroids.Add(new Asteroid(4, labsX, labsY, gsf));
+                            result.Asteroids.Add(new Asteroid(4, gsf, labsX, labsY));
                         else if (res[0] == 0x929)
                             result.Saucer = new Saucer(labsX, labsY, gsf);
                         break;
 
                     case 13: //RTSL
-                        Console.WriteLine("RTSL");
+                        //Console.WriteLine("RTSL");
                         break;
 
                     case 14: //JMPL
-                        Console.WriteLine("JMPL");
+                        //Console.WriteLine("JMPL");
                         break;
 
                     case 15: //SVEC
-                        Console.WriteLine("SVEC");
+                        //Console.WriteLine("SVEC");
                         break;
 
                     default: //VCTR
-                        Console.WriteLine("VCTR");
+                        //Console.WriteLine("VCTR");
                         BitArray tmpVctr = new BitArray(new byte[] { ram[i], ram[i + 1] });
                         tmpVctr.And(new BitArray(new bool[] { true, true, true, true, true, true, true, true, true, true, false, false, false, false, false, false })).CopyTo(res, 0);
                         vctrY = res[0];
@@ -232,18 +233,129 @@ namespace Asteroids
             return result;
         }
 
-        private void AnalyseField(GameField gf)
+        private double GetDistanceBetweenVectors(int x1, int x2, int y1, int y2)
         {
+            return Math.Sqrt(Math.Pow(x2 - x1, 2) + Math.Pow(y2 - y1, 2));
+        }
+
+        private int AnalyseField(GameField gf)
+        {
+            double distNearestObject;
+            double dirXNearestObject;
+            double dirYNearestObject;
+
+            var nearestAsteroid = gf.Asteroids.FirstOrDefault(y => GetDistanceBetweenVectors(gf.SpaceShip.X, y.X, gf.SpaceShip.Y, y.Y) == gf.Asteroids.Min(x => GetDistanceBetweenVectors(gf.SpaceShip.X, x.X, gf.SpaceShip.Y, x.Y)));
+            if (nearestAsteroid == null && gf.Saucer == null)
+            {
+                return 0;
+            }
+            distNearestObject = GetDistanceBetweenVectors(gf.SpaceShip.X, nearestAsteroid.X, gf.SpaceShip.Y, nearestAsteroid.Y);
+            dirXNearestObject = nearestAsteroid.X - gf.SpaceShip.X;
+            dirYNearestObject = nearestAsteroid.Y - gf.SpaceShip.Y;
+
+            switch (nearestAsteroid.Type)
+            {
+                case 1:
+                    distNearestObject -= 10;
+                    break;
+
+                case 2:
+                    distNearestObject -= 10*10;
+                    break;
+
+                case 3:
+                    distNearestObject -= 15*15;
+                    break;
+
+                case 4:
+                    distNearestObject -= 20*20;
+                    break;
+            }
+
+            if (gf.Saucer != null)
+            {
+                var distSaucer = GetDistanceBetweenVectors(gf.SpaceShip.X, gf.Saucer.X, gf.SpaceShip.Y, gf.Saucer.Y);
+                if (distSaucer < distNearestObject)
+                {
+                    distNearestObject = distSaucer;
+                    dirXNearestObject = gf.Saucer.X - gf.SpaceShip.X;
+                    dirYNearestObject = gf.Saucer.Y - gf.SpaceShip.Y;
+                }
+            }
+
+            Vector spaceShipDirection = new Vector(gf.SpaceShip.Dx, gf.SpaceShip.Dy);
+            Vector nearestAsteroidDirection = new Vector(dirXNearestObject, dirYNearestObject);
+
+            // "Run for your life" mode
+            if (distNearestObject <= 50)
+            {
+                return 4;
+            } else if(distNearestObject>50&&distNearestObject<250)
+            {
+                if (Vector.Multiply(spaceShipDirection, nearestAsteroidDirection) > 0)
+                {
+                    return 1;
+                }
+                else if (Vector.Multiply(spaceShipDirection, nearestAsteroidDirection) < 0)
+                {
+                    return 2;
+                }
+                else
+                {
+                    return 3;
+                }
+            } else
+            {
+                return 3;
+            }
+
+            /**
+          EXAMPLE:
+            Saucer:
+
+            SpaceShip:
+                    X: 108, Y: 236, DX: 440, DY:1472
+            Field:
+            Asteroids:
+                    X: 736, Y: 211, ScaleFactor: 0, Typ:1 Distance: 628,4974144736
+                    X: 608, Y: 354, ScaleFactor: 15, Typ:4 Distance: 513,735340423452
+                    X: 353, Y: 186, ScaleFactor: 0, Typ:2 Distance: 250,049995001
+                    X: 772, Y: 134, ScaleFactor: 15, Typ:1 Distance: 671,788657242737
+                    X: 60, Y: 530, ScaleFactor: 15, Typ:4 Distance: 297,892598095354
+                    X: 565, Y: 238, ScaleFactor: 15, Typ:2 Distance: 457,00437634666
+            Shots:
+             */
+
+            //return 0;
         }
 
         public void Test()
         {
-            byte[] b = Enumerable.Range(0, example1.Length)
-                .Where(x => x % 2 == 0)
-                .Select(x => Convert.ToByte(example1.Substring(x, 2), 16))
-                .ToArray();
+            bool IsRunning = true;
+            //byte[] b = Enumerable.Range(0, example1.Length)
+            //    .Where(x => x % 2 == 0)
+            //    .Select(x => Convert.ToByte(example1.Substring(x, 2), 16))
+            //    .ToArray();
 
-            GameField gf = LoadField(b);
+            //GameField gf = LoadField(b);
+            //Console.WriteLine(gf.ToString());
+            using (UdpClient client = new UdpClient(_adress, _port))
+            {
+                while (IsRunning)
+                {
+                    client.Send(_command, 8);
+                    var b = client.ReceiveAsync().Result.Buffer;
+                    GameField gf = LoadField(b);
+                    if (gf.SpaceShip != null)
+                    {
+                        int todo = AnalyseField(gf);
+                        _command[6] = MapCommand(todo);
+                        if (gf.IsEmpty())
+                            IsRunning = false;
+                        //Console.WriteLine(gf.ToString());
+                    }
+                }
+            }
         }
 
         private BitArray LeftShift(BitArray b, int shiftSize)

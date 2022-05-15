@@ -13,6 +13,11 @@ namespace Asteroids.Model
         public int X { get => _x; set => _x = value; }
         public int Y { get => _y; set => _y = value; }
 
+        public override string ToString()
+        {
+            return $"X: {X}, Y: {Y}";
+        }
+
         public Shot()
         {
             X = 0;

@@ -15,6 +15,11 @@ namespace Asteroids.Model
         public int Y { get => _y; set => _y = value; }
         public int Size { get => _size; set => _size = value; }
 
+        public override string ToString()
+        {
+            return $"X: {X}, Y: {Y}, Size: {Size}";
+        }
+
         public Saucer()
         {
             X = 0;
